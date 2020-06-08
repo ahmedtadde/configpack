@@ -43,3 +43,17 @@ export const DEFAULT_PROVIDER_DEPLOYMENT = [OMNI_SELECTOR] as const;
 export const DEFAULT_PROVIDER_INSTANCE = [OMNI_SELECTOR] as const;
 export const DEFAULT_PROVIDER_MODE = [OMNI_SELECTOR] as const;
 export const DEFAULT_PROVIDER_HOSTNAME = [OMNI_SELECTOR] as const;
+
+export const PROVIDER_SCHEMA_TYPE = {
+  LAMBDA: "lambda",
+  IO_TS: "io-ts",
+  JSON: "json",
+  CLASS_VALIDATOR: "class-validator",
+  JOI: "joi",
+  YUP: "yup",
+  NODE_INPUT_VALIDATOR: "node-input-validator",
+  SCHEMA_INSPECTOR: "schema-inspector",
+  TCOMB_VALIDATION: "tcomb-validation",
+  TYPED_IMMUTABLE: "typed-immutable",
+  OBJECT_MODEL: "objectmodel"
+};

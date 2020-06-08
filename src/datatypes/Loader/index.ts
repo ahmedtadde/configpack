@@ -15,7 +15,7 @@ import {
   none,
   some,
   EnvironmentValuesDeserializationType,
-  fold,
+  optionfold,
   EnvloaderOutputType,
   fromNullable,
   isNone,
@@ -39,6 +39,10 @@ import {
 import yargsparser from "yargs-parser";
 
 export type LoaderType = typeof LOADER_TYPE[keyof typeof LOADER_TYPE];
+export type LoaderOutputType =
+  | EnvloaderOutputType
+  | FSloaderOutputType
+  | ArgvloaderOutputType;
 
 export interface FSloaderInput {
   readonly filepath: string;
@@ -152,7 +156,7 @@ export function createloader(someinput: unknown): Option<Loader> {
 
       const use = Object.freeze(
         someinput.use.reduce((inputs: EnvloaderInput[], option: unknown) => {
-          return fold(
+          return optionfold(
             () => inputs,
             (value: EnvloaderInput) => inputs.concat(value)
           )(createEnvloaderInput(option));
@@ -176,7 +180,7 @@ export function createloader(someinput: unknown): Option<Loader> {
 
       const use = Object.freeze(
         someinput.use.reduce((inputs: FSloaderInput[], option: unknown) => {
-          return fold(
+          return optionfold(
             () => inputs,
             (value: FSloaderInput) => inputs.concat(value)
           )(createFSloaderInput(option));
@@ -200,7 +204,7 @@ export function createloader(someinput: unknown): Option<Loader> {
 
       const use = Object.freeze(
         someinput.use.reduce((inputs: ArgvloaderInput[], option: unknown) => {
-          return fold(
+          return optionfold(
             () => inputs,
             (value: ArgvloaderInput) => inputs.concat(value)
           )(createArgvloaderInput(option));
@@ -422,9 +426,7 @@ export function runFSloader(
 export function runloader(
   loader: Loader,
   opts: Record<string, unknown>
-): Option<
-  Readonly<EnvloaderOutputType | FSloaderOutputType | ArgvloaderOutputType>
-> {
+): Option<Readonly<LoaderOutputType>> {
   switch (loader.type) {
     case LOADER_TYPE.ENV: {
       return some(runEnvloader(loader, opts));

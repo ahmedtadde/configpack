@@ -1,15 +1,17 @@
 import {
   Loader,
-  createloader,
-  ConfigurableLoaderProperties
+  ConfigurableLoaderProperties,
+  LoaderOutputType
 } from "@datatypes/Loader";
 import {
   Option,
   DeploymentType,
   none,
-  fold,
+  optionfold,
   some,
-  fromNullable
+  fromNullable,
+  ProviderOutputType,
+  ProviderSchemaType
 } from "@/core/types";
 import {
   isPlainObject,
@@ -26,11 +28,22 @@ import {
   DEFAULT_PROVIDER_HOSTNAME,
   LOADER_TYPE
 } from "@/core/constants";
+import { Either, left, right } from "@/core/types/Either";
 
 export interface ProviderLoaderConfig {
-  use: Readonly<Loader>;
-  for: string;
-  options: ConfigurableLoaderProperties;
+  readonly use: Readonly<Loader>;
+  readonly for: string;
+  readonly options: ConfigurableLoaderProperties;
+}
+
+export interface ProviderSchemaConfig {
+  readonly name: string;
+  readonly type: ProviderSchemaType;
+  readonly transform: <T>(
+    context: Readonly<Record<string, unknown>>,
+    data: Readonly<LoaderOutputType>
+  ) => T;
+  readonly use: 
 }
 
 export interface Provider {
@@ -40,16 +53,21 @@ export interface Provider {
   readonly hostname: ReadonlyArray<string>;
   readonly mode: ReadonlyArray<string | number>;
   readonly loaders: ReadonlyArray<ProviderLoaderConfig>;
-  readonly schema: string;
+  readonly schema: Readonly<ProviderSchemaConfig>;
 }
 
 export const createprovider = (
-  someinput: unknown,
-  context: Record<string, unknown>
+  context: Record<string, unknown>,
+  someinput: unknown
 ): Option<Provider> => {
   if (!isPlainObject(someinput)) return none;
   if (!isNonEmptyString(someinput.name)) return none;
   if (!isNonEmptyString(someinput.schema)) return none;
+
+  // const schema = () => {
+  //   if (!isPlainObject(context) || !isPlainObject(context.availableschemas))
+  //     return Object.freeze([]) as ReadonlyArray<ProviderLoaderConfig>;
+  // };
 
   const deployment = (): ReadonlyArray<DeploymentType> => {
     if (!Array.isArray(someinput.deployment))
@@ -168,7 +186,7 @@ export const createprovider = (
             ? loaderconf.for.trim()
             : loaderconf.use.trim();
 
-          return fold(
+          return optionfold(
             () => collectedloaders,
             (value: Loader) =>
               collectedloaders.concat({
@@ -195,3 +213,31 @@ export const createprovider = (
     })
   );
 };
+
+export async function runprovider(
+  context: Record<string, unknown>,
+  provider: Provider
+): Promise<Either<Record<string, Error[]>, ProviderOutputType>> {
+  return new Promise((resolve) => {
+    Promise.resolve()
+      .then(() => {
+        return right({});
+      })
+      .then(resolve)
+      .catch((err: unknown) => {
+        resolve(
+          left({
+            err: [
+              new Error(
+                isNullish(err)
+                  ? "Unexpected error occured"
+                  : isNonEmptyString(err)
+                  ? err
+                  : JSON.stringify(err)
+              )
+            ]
+          })
+        );
+      });
+  });
+}
